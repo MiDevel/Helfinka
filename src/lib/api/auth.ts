@@ -16,3 +16,13 @@ export async function logout(): Promise<void> {
     // Ignore logout errors; we still clear local auth state.
   }
 }
+
+interface HelloResponse {
+  message: string
+}
+
+export async function hello(): Promise<HelloResponse> {
+  const response = await api.get<HelloResponse>('/hello')
+
+  return response.data
+}

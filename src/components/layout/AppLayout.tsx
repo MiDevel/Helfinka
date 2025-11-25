@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
-import { HeartPulse, LogOut, Menu } from 'lucide-react'
+import { Activity, HeartPulse, LogOut, Menu } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { useAuth } from '@/lib/auth/AuthProvider'
+import { hello } from '@/lib/api/auth'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +22,17 @@ interface AppLayoutProps {
 
 function AppLayout({ children }: AppLayoutProps) {
   const { user, isAuthenticated, logout } = useAuth()
+
+  const handlePingServer = async () => {
+    try {
+      const response = await hello()
+      toast.success(response.message || 'Server is reachable.')
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('PING server failed', error)
+      toast.error('PING failed: unable to reach the server.')
+    }
+  }
 
   const handleLogout = () => {
     logout().catch(() => {
@@ -99,6 +112,10 @@ function AppLayout({ children }: AppLayoutProps) {
                     <DropdownMenuItem asChild>
                       <NavLink to="/events">Events</NavLink>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handlePingServer}>
+                      <Activity className="mr-2 h-4 w-4" />
+                      <span>PING server</span>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -143,6 +160,10 @@ function AppLayout({ children }: AppLayoutProps) {
                   {isAuthenticated && (
                     <>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handlePingServer}>
+                        <Activity className="mr-2 h-4 w-4" />
+                        <span>PING server</span>
+                      </DropdownMenuItem>
                       <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Logout</span>
