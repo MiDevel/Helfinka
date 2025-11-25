@@ -145,12 +145,6 @@ function AppLayout({ children }: AppLayoutProps) {
               </Button>
             )}
 
-            <div className="hidden md:block">
-              <Button asChild size="sm">
-                <NavLink to="/events/new">New Entry</NavLink>
-              </Button>
-            </div>
-
             <div className="md:hidden">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -168,9 +162,6 @@ function AppLayout({ children }: AppLayoutProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <NavLink to="/summary">Summary</NavLink>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <NavLink to="/events/new">New Entry</NavLink>
                   </DropdownMenuItem>
                   {isAuthenticated && (
                     <>
