@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Activity, HeartPulse, LogOut, Menu } from 'lucide-react'
+import { Activity, HeartPulse, LogOut, Menu, MoonStar, Sun } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { hello } from '@/lib/api/auth'
+import { useTheme } from '@/lib/theme/ThemeProvider'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,6 +23,7 @@ interface AppLayoutProps {
 
 function AppLayout({ children }: AppLayoutProps) {
   const { user, isAuthenticated, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   const handlePingServer = async () => {
     try {
@@ -112,6 +114,19 @@ function AppLayout({ children }: AppLayoutProps) {
                     <DropdownMenuItem asChild>
                       <NavLink to="/events">Events</NavLink>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={toggleTheme}>
+                      {theme === 'dark' ? (
+                        <>
+                          <Sun className="mr-2 h-4 w-4" />
+                          <span>Light mode</span>
+                        </>
+                      ) : (
+                        <>
+                          <MoonStar className="mr-2 h-4 w-4" />
+                          <span>Dark mode</span>
+                        </>
+                      )}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handlePingServer}>
                       <Activity className="mr-2 h-4 w-4" />
                       <span>PING server</span>
@@ -160,6 +175,19 @@ function AppLayout({ children }: AppLayoutProps) {
                   {isAuthenticated && (
                     <>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={toggleTheme}>
+                        {theme === 'dark' ? (
+                          <>
+                            <Sun className="mr-2 h-4 w-4" />
+                            <span>Light mode</span>
+                          </>
+                        ) : (
+                          <>
+                            <MoonStar className="mr-2 h-4 w-4" />
+                            <span>Dark mode</span>
+                          </>
+                        )}
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={handlePingServer}>
                         <Activity className="mr-2 h-4 w-4" />
                         <span>PING server</span>

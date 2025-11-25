@@ -7,6 +7,7 @@ import './index.css'
 import App from './App.tsx'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/lib/auth/AuthProvider'
+import { ThemeProvider } from '@/lib/theme/ThemeProvider'
 
 const queryClient = new QueryClient()
 
@@ -15,8 +16,10 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthProvider>
-          <App />
-          <Toaster />
+          <ThemeProvider>
+            <App />
+            <Toaster />
+          </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
