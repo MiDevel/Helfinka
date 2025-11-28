@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Serve existing files and directories as-is
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# For any other request under this build, serve index.html (SPA entry)
+RewriteRule ^ index.html [L]
