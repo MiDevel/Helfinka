@@ -9,7 +9,7 @@ import type { EntryType } from '@/types/entry'
 import { entryTypeSchema } from '@/types/entry'
 import { NoteTagsField } from '@/components/entries/NoteTagsField'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -28,13 +28,13 @@ function getInitialType(raw: string | null): SupportedEntryType {
 function getTitle(type: SupportedEntryType): string {
   switch (type) {
     case 'BP':
-      return 'New blood pressure entry'
+      return 'Blood pressure'
     case 'WEIGHT':
-      return 'New weight entry'
+      return 'Weight'
     case 'MED':
-      return 'New medication entry'
+      return 'Medication'
     case 'NOTE':
-      return 'New note entry'
+      return 'Note'
     default:
       return 'New entry'
   }
@@ -134,14 +134,11 @@ function EventCreatePage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{getTitle(type)}</h1>
         <p className="text-sm text-muted-foreground">
-          Choose a type and record a single health entry. All timestamps are stored in UTC.
+          Choose a type and record a single health entry.
         </p>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Entry type</CardTitle>
-        </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -182,9 +179,6 @@ function EventCreatePage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Details</CardTitle>
-          </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1">
               <label htmlFor="timestamp" className="text-sm font-medium">
