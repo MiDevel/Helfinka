@@ -32,7 +32,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
-          local-dir: dist
+          local-dir: dist/
           # FTP user is rooted at /public_html/.../apps/helfinka:
           server-dir: /
           # optional but handy: cleans removed files
