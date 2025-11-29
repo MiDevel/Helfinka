@@ -18,8 +18,9 @@ A health diary application for tracking personal health events and summaries.
 ## Getting Started
 
 - Install dependencies: `npm install`
-- Start dev server: `npm run dev`
-- Run a production build: `npm run build`
+- Start dev server against the **dev API**: `npm run dev`
+- Start dev server against the **prod API** (local-only): `npm run prod`
+- Run a production build (always uses **prod API**): `npm run build`
 - Preview production build: `npm run preview`
 - Lint the codebase: `npm run lint`
 
@@ -41,6 +42,15 @@ A health diary application for tracking personal health events and summaries.
   - Optionally add navigation in `AppLayout`.
 - **Add a new UI component from shadcn/ui**
   - Run `npx shadcn@latest add <component>` from the project root.
+
+### API environments and Vite modes
+
+- API requests are made via a shared Axios client in `src/lib/api/client.ts`, which uses `API_BASE_URL` from `src/lib/config.ts`.
+- `API_BASE_URL` is selected based on the current Vite mode (`import.meta.env.MODE`):
+  - `npm run dev`  → mode `development` → uses `DEV_API_BASE_URL`.
+  - `npm run prod` → mode `prod-local`  → uses `PROD_API_BASE_URL` but still runs a local dev server.
+  - `npm run build` → mode `production` → uses `PROD_API_BASE_URL` for the deployed bundle.
+- `PROD_API_BASE_URL` and `DEV_API_BASE_URL` are defined as string constants in `src/lib/config.ts` (no `.env` required for API URLs).
 
 ## Deployment Notes
 
