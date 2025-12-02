@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -49,8 +49,7 @@ function EventCreatePage() {
   const [type, setType] = useState<SupportedEntryType>(initialType)
   const [timestampLocal, setTimestampLocal] = useState(nowLocalForDateTimeInput)
 
-  const [bpSystolic, setBpSystolic] = useState('')
-  const [bpDiastolic, setBpDiastolic] = useState('')
+  const [bpValue, setBpValue] = useState('')
   const [bpHeartRate, setBpHeartRate] = useState('')
   const [bpContext, setBpContext] = useState('')
 
@@ -84,10 +83,19 @@ function EventCreatePage() {
     let data: unknown
 
     if (type === 'BP') {
+      const [systolicRaw, diastolicRaw] = bpValue.split('/')
+      const systolic = Number(systolicRaw)
+      const diastolic = Number(diastolicRaw)
+      const heartRate = Number(bpHeartRate)
+
+      if (!Number.isFinite(systolic) || !Number.isFinite(diastolic) || !Number.isFinite(heartRate)) {
+        return
+      }
+
       data = {
-        systolic: Number(bpSystolic),
-        diastolic: Number(bpDiastolic),
-        heartRate: Number(bpHeartRate),
+        systolic,
+        diastolic,
+        heartRate,
         context: bpContext || undefined,
       }
     } else if (type === 'WEIGHT') {
@@ -127,6 +135,48 @@ function EventCreatePage() {
 
   const handleCancel = () => {
     navigate('/')
+  }
+
+  const handleBpChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const raw = event.target.value
+
+    if (!raw) {
+      setBpValue('')
+      return
+    }
+
+    const firstSeparatorIndex = raw.search(/\D/)
+
+    if (firstSeparatorIndex !== -1) {
+      const rawSystolic = raw.slice(0, firstSeparatorIndex).replace(/\D/g, '')
+      const rawDiastolic = raw.slice(firstSeparatorIndex + 1).replace(/\D/g, '')
+
+      const systolicPart = rawSystolic.slice(0, 3)
+      const diastolicPart = rawDiastolic.slice(0, 3)
+
+      const next = systolicPart ? `${systolicPart}/${diastolicPart}` : ''
+      setBpValue(next)
+      return
+    }
+
+    const digits = raw.replace(/\D/g, '')
+
+    if (!digits) {
+      setBpValue('')
+      return
+    }
+
+    const systolicPart = digits.slice(0, 3)
+    const diastolicPart = digits.slice(3, 6)
+
+    if (digits.length <= 3) {
+      const next = digits.length === 3 ? `${systolicPart}/` : systolicPart
+      setBpValue(next)
+      return
+    }
+
+    const next = `${systolicPart}/${diastolicPart}`
+    setBpValue(next)
   }
 
   return (
@@ -196,32 +246,16 @@ function EventCreatePage() {
             {type === 'BP' && (
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-1">
-                  <label htmlFor="systolic" className="text-sm font-medium">
-                    Systolic
+                  <label htmlFor="bloodPressure" className="text-sm font-medium">
+                    Blood pressure
                   </label>
                   <Input
-                    id="systolic"
-                    type="number"
+                    id="bloodPressure"
+                    type="text"
                     inputMode="numeric"
-                    min={40}
-                    max={300}
-                    value={bpSystolic}
-                    onChange={(event) => setBpSystolic(event.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="diastolic" className="text-sm font-medium">
-                    Diastolic
-                  </label>
-                  <Input
-                    id="diastolic"
-                    type="number"
-                    inputMode="numeric"
-                    min={20}
-                    max={200}
-                    value={bpDiastolic}
-                    onChange={(event) => setBpDiastolic(event.target.value)}
+                    placeholder="xxx/xx"
+                    value={bpValue}
+                    onChange={handleBpChange}
                     required
                   />
                 </div>
