@@ -5,7 +5,7 @@ import { Activity, HeartPulse, LogOut, Menu, MoonStar, Sun } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useAuth } from '@/lib/auth/AuthProvider'
-import { hello } from '@/lib/api/auth'
+import { getApiVersion, hello, type ApiVersionInfo } from '@/lib/api/auth'
 import { useTheme } from '@/lib/theme/ThemeProvider'
 import { APP_AUTHOR, APP_COPYRIGHT, APP_NAME, APP_URL, APP_VERSION } from '@/lib/appInfo'
 import { cn } from '@/lib/utils'
@@ -26,6 +26,10 @@ interface AppLayoutProps {
 
 function AppLayout({ children }: AppLayoutProps) {
   const [isAboutOpen, setIsAboutOpen] = useState(false)
+  const [isVersionOpen, setIsVersionOpen] = useState(false)
+  const [apiVersion, setApiVersion] = useState<ApiVersionInfo | null>(null)
+  const [isVersionLoading, setIsVersionLoading] = useState(false)
+  const [versionError, setVersionError] = useState<string | null>(null)
   const { user, isAuthenticated, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
 
@@ -37,6 +41,24 @@ function AppLayout({ children }: AppLayoutProps) {
       // eslint-disable-next-line no-console
       console.error('PING server failed', error)
       toast.error('PING failed: unable to reach the server.')
+    }
+  }
+
+  const handleShowApiVersion = async () => {
+    setIsVersionLoading(true)
+    setVersionError(null)
+
+    try {
+      const versionInfo = await getApiVersion()
+      setApiVersion(versionInfo)
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Fetching API version failed', error)
+      setApiVersion(null)
+      setVersionError('Unable to fetch API version.')
+    } finally {
+      setIsVersionLoading(false)
+      setIsVersionOpen(true)
     }
   }
 
@@ -137,7 +159,11 @@ function AppLayout({ children }: AppLayoutProps) {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handlePingServer}>
                       <Activity className="mr-2 h-4 w-4" />
-                      <span>PING server</span>
+                      <span>Test AUTH</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleShowApiVersion}>
+                      <Activity className="mr-2 h-4 w-4" />
+                      <span>API Version</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setIsAboutOpen(true)}>
                       <span>About...</span>
@@ -192,7 +218,11 @@ function AppLayout({ children }: AppLayoutProps) {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handlePingServer}>
                         <Activity className="mr-2 h-4 w-4" />
-                        <span>PING server</span>
+                        <span>Test AUTH</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleShowApiVersion}>
+                        <Activity className="mr-2 h-4 w-4" />
+                        <span>API Version</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setIsAboutOpen(true)}>
                         <span>About...</span>
@@ -239,6 +269,32 @@ function AppLayout({ children }: AppLayoutProps) {
               </a>
             </p>
             <p className="pt-2 text-xs text-muted-foreground">{APP_COPYRIGHT}</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isVersionOpen} onOpenChange={setIsVersionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>API Version</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-2 text-sm">
+            {isVersionLoading && <p className="text-muted-foreground">Loading API version...</p>}
+            {!isVersionLoading && versionError && (
+              <p className="text-destructive">{versionError}</p>
+            )}
+            {!isVersionLoading && !versionError && apiVersion && (
+              <div className="space-y-1">
+                <p>
+                  <span className="font-medium">Version:</span> {apiVersion.version}
+                </p>
+                <p>
+                  <span className="font-medium">Environment:</span> {apiVersion.environment}
+                </p>
+                <p>
+                  <span className="font-medium">Built:</span> {apiVersion.built}
+                </p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

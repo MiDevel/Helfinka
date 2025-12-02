@@ -26,3 +26,15 @@ export async function hello(): Promise<HelloResponse> {
 
   return response.data
 }
+
+export interface ApiVersionInfo {
+  version: string
+  environment: string
+  built: string
+}
+
+export async function getApiVersion(): Promise<ApiVersionInfo> {
+  const response = await api.get<ApiVersionInfo>('/version')
+
+  return response.data
+}

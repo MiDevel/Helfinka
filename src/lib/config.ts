@@ -2,8 +2,7 @@
 const PROD_API_BASE_URL = 'https://e4i00azm6h.execute-api.us-east-2.amazonaws.com/prod'
 
 // Base URL for the development API stage.
-// If you create a separate dev stage in API Gateway, update this value accordingly.
-const DEV_API_BASE_URL = 'https://e4i00azm6h.execute-api.us-east-2.amazonaws.com/dev'
+const DEV_API_BASE_URL = 'https://4397wtmg4a.execute-api.us-east-2.amazonaws.com/dev'
 
 // Vite exposes the current mode via import.meta.env.MODE.
 // - npm run dev   -> MODE = 'development'   -> use DEV API
