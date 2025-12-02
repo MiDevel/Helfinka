@@ -26,6 +26,7 @@ interface AuthContextValue {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: (options?: { skipRemote?: boolean }) => Promise<void>
+  updateUser: (user: User) => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -103,6 +104,22 @@ function AuthProvider({ children }: AuthProviderProps) {
     setToken(result.token)
   }, [])
 
+  const updateUser = useCallback(
+    (nextUser: User) => {
+      setUser(nextUser)
+
+      if (token) {
+        const auth: StoredAuth = {
+          token,
+          user: nextUser,
+        }
+
+        saveAuth(auth)
+      }
+    },
+    [token]
+  )
+
   const value: AuthContextValue = {
     user,
     token,
@@ -110,6 +127,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     loading,
     login,
     logout,
+    updateUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

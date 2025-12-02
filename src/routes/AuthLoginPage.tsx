@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { type Location, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/lib/auth/AuthProvider'
@@ -12,6 +13,8 @@ function AuthLoginPage() {
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -19,8 +22,20 @@ function AuthLoginPage() {
 
   const from = ((location.state as { from?: Location } | undefined)?.from?.pathname) ?? '/'
 
+  const isEmailEmpty = !email
+  const isEmailFormatValid = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const isEmailInvalid = !isEmailEmpty && !isEmailFormatValid
+  const isPasswordEmpty = !password
+
+  const isFormInvalid = isEmailInvalid || isEmailEmpty || isPasswordEmpty
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (isFormInvalid) {
+      setEmailTouched(true)
+      return
+    }
 
     setError(null)
     setSubmitting(true)
@@ -58,23 +73,34 @@ function AuthLoginPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                onBlur={() => setEmailTouched(true)}
                 disabled={submitting}
-                required
+                aria-invalid={emailTouched && isEmailInvalid ? 'true' : undefined}
               />
+              <p className="text-xs text-muted-foreground">Use a valid email address format.</p>
             </div>
             <div className="space-y-1">
               <label htmlFor="password" className="text-sm font-medium">
                 Password
               </label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                disabled={submitting}
-                required
-              />
+              <div className="relative flex items-center">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={submitting}
+                  aria-invalid={isPasswordEmpty ? 'true' : undefined}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 inline-flex h-6 w-6 items-center justify-center text-muted-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             {error && (
               <p className="text-sm text-destructive" role="alert">
@@ -83,7 +109,7 @@ function AuthLoginPage() {
             )}
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
-            <Button type="submit" className="w-full" disabled={submitting}>
+            <Button type="submit" className="w-full" disabled={submitting || isFormInvalid}>
               {submitting ? 'Signing in...' : 'Sign in'}
             </Button>
             <p className="text-xs text-muted-foreground text-center">

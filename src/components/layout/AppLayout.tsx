@@ -1,20 +1,19 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Activity, HeartPulse, LogOut, Menu, MoonStar, Sun } from 'lucide-react'
-import { toast } from 'sonner'
+import { Activity, HeartPulse, Info, KeyRound, LogOut, MoonStar, Sun, User } from 'lucide-react'
 
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { getApiVersion, hello, type ApiVersionInfo } from '@/lib/api/auth'
 import { useTheme } from '@/lib/theme/ThemeProvider'
 import { APP_AUTHOR, APP_COPYRIGHT, APP_NAME, APP_URL, APP_VERSION } from '@/lib/appInfo'
-import { cn } from '@/lib/utils'
+import { ProfileDialog } from '@/components/profile/ProfileDialog'
+import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -30,17 +29,59 @@ function AppLayout({ children }: AppLayoutProps) {
   const [apiVersion, setApiVersion] = useState<ApiVersionInfo | null>(null)
   const [isVersionLoading, setIsVersionLoading] = useState(false)
   const [versionError, setVersionError] = useState<string | null>(null)
-  const { user, isAuthenticated, logout } = useAuth()
+  const [isAccessOpen, setIsAccessOpen] = useState(false)
+  const [accessMessage, setAccessMessage] = useState<string | null>(null)
+  const [accessError, setAccessError] = useState<string | null>(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const { user, isAuthenticated, logout, updateUser } = useAuth()
   const { theme, toggleTheme } = useTheme()
 
   const handlePingServer = async () => {
+    setAccessMessage(null)
+    setAccessError(null)
+
     try {
       const response = await hello()
-      toast.success(response.message || 'Server is reachable.')
+      const baseMessage =
+        'Success! Access to the server is available and your stored login credentials are valid.'
+
+      if (response.message) {
+        setAccessMessage(`${response.message}\n\n${baseMessage}`)
+      } else {
+        setAccessMessage(baseMessage)
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('PING server failed', error)
-      toast.error('PING failed: unable to reach the server.')
+
+      let details = 'Unable to validate access. Please try again.'
+
+      if (error && typeof error === 'object') {
+        const anyError = error as {
+          message?: string
+          response?: { data?: unknown; status?: number; statusText?: string }
+        }
+
+        const data = anyError.response?.data as
+          | { message?: string }
+          | string
+          | undefined
+
+        if (typeof data === 'string' && data.trim()) {
+          details = data
+        } else if (data && typeof data === 'object' && 'message' in data && data.message) {
+          details = String(data.message)
+        } else if (anyError.message) {
+          details = anyError.message
+        } else if (anyError.response?.status) {
+          details = `Request failed with status ${anyError.response.status} ${anyError.response.statusText ?? ''}`.trim()
+        }
+      }
+
+      setAccessError(details)
+    } finally {
+      setIsAccessOpen(true)
     }
   }
 
@@ -81,47 +122,10 @@ function AppLayout({ children }: AppLayoutProps) {
             <span className="text-lg font-semibold tracking-tight">Helfinka</span>
           </NavLink>
 
-          <nav className="hidden items-center gap-4 text-sm font-medium md:flex">
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                cn(
-                  'text-muted-foreground transition-colors hover:text-foreground',
-                  isActive && 'text-foreground'
-                )
-              }
-              end
-            >
-              Dashboard
-            </NavLink>
-            <NavLink
-              to="/events"
-              className={({ isActive }) =>
-                cn(
-                  'text-muted-foreground transition-colors hover:text-foreground',
-                  isActive && 'text-foreground'
-                )
-              }
-            >
-              Events
-            </NavLink>
-            <NavLink
-              to="/summary"
-              className={({ isActive }) =>
-                cn(
-                  'text-muted-foreground transition-colors hover:text-foreground',
-                  isActive && 'text-foreground'
-                )
-              }
-            >
-              Summary
-            </NavLink>
-          </nav>
-
           <div className="flex items-center gap-2">
             {isAuthenticated && user ? (
               <>
-                <div className="hidden flex-col items-end text-right text-xs leading-tight sm:flex">
+                <div className="flex flex-col items-end text-right text-xs leading-tight">
                   <span className="font-medium">{user.displayName}</span>
                 </div>
                 <DropdownMenu>
@@ -137,13 +141,19 @@ function AppLayout({ children }: AppLayoutProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Account</DropdownMenuLabel>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/">Dashboard</NavLink>
+                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>My Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/events">Events</NavLink>
+                    <DropdownMenuItem onClick={() => setIsChangePasswordOpen(true)}>
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      <span>Change Password</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handlePingServer}>
+                      <Activity className="mr-2 h-4 w-4" />
+                      <span>Validate access</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={toggleTheme}>
                       {theme === 'dark' ? (
                         <>
@@ -157,15 +167,12 @@ function AppLayout({ children }: AppLayoutProps) {
                         </>
                       )}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handlePingServer}>
-                      <Activity className="mr-2 h-4 w-4" />
-                      <span>Test AUTH</span>
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleShowApiVersion}>
                       <Activity className="mr-2 h-4 w-4" />
                       <span>API Version</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setIsAboutOpen(true)}>
+                      <Info className="mr-2 h-4 w-4" />
                       <span>About...</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -181,61 +188,6 @@ function AppLayout({ children }: AppLayoutProps) {
                 <NavLink to="/auth/login">Login</NavLink>
               </Button>
             )}
-
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8">
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Navigate</DropdownMenuLabel>
-                  <DropdownMenuItem asChild>
-                    <NavLink to="/">Dashboard</NavLink>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <NavLink to="/events">Events</NavLink>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <NavLink to="/summary">Summary</NavLink>
-                  </DropdownMenuItem>
-                  {isAuthenticated && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={toggleTheme}>
-                        {theme === 'dark' ? (
-                          <>
-                            <Sun className="mr-2 h-4 w-4" />
-                            <span>Light mode</span>
-                          </>
-                        ) : (
-                          <>
-                            <MoonStar className="mr-2 h-4 w-4" />
-                            <span>Dark mode</span>
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handlePingServer}>
-                        <Activity className="mr-2 h-4 w-4" />
-                        <span>Test AUTH</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleShowApiVersion}>
-                        <Activity className="mr-2 h-4 w-4" />
-                        <span>API Version</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setIsAboutOpen(true)}>
-                        <span>About...</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Logout</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
         </div>
       </header>
@@ -298,6 +250,36 @@ function AppLayout({ children }: AppLayoutProps) {
           </div>
         </DialogContent>
       </Dialog>
+      <Dialog open={isAccessOpen} onOpenChange={setIsAccessOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Validate access</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-2 text-sm">
+            {accessMessage && (
+              <p className="whitespace-pre-line">
+                {accessMessage}
+              </p>
+            )}
+            {accessError && <p className="text-destructive">{accessError}</p>}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {isAuthenticated && user && (
+        <>
+          <ProfileDialog
+            open={isProfileOpen}
+            onOpenChange={setIsProfileOpen}
+            user={user}
+            onUserUpdated={updateUser}
+          />
+          <ChangePasswordDialog
+            open={isChangePasswordOpen}
+            onOpenChange={setIsChangePasswordOpen}
+            userId={user.id}
+          />
+        </>
+      )}
     </div>
   )
 }
