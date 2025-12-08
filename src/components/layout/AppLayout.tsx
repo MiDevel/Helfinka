@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { Activity, HeartPulse, Info, KeyRound, LogOut, MoonStar, Sun, User } from 'lucide-react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Activity, ChevronLeft, HeartPulse, Info, KeyRound, LogOut, MoonStar, Sun, User } from 'lucide-react'
 
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { getApiVersion, hello, type ApiVersionInfo } from '@/lib/api/auth'
@@ -23,6 +23,18 @@ interface AppLayoutProps {
   children: ReactNode
 }
 
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'Helfinka',
+  '/events': 'Events',
+  '/events/new': 'New Entry',
+  '/summary': 'Summary',
+  '/auth/login': 'Login',
+}
+
+function getPageTitle(pathname: string): string {
+  return PAGE_TITLES[pathname] ?? 'Helfinka'
+}
+
 function AppLayout({ children }: AppLayoutProps) {
   const [isAboutOpen, setIsAboutOpen] = useState(false)
   const [isVersionOpen, setIsVersionOpen] = useState(false)
@@ -36,6 +48,11 @@ function AppLayout({ children }: AppLayoutProps) {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const { user, isAuthenticated, logout, updateUser } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const isHomePage = location.pathname === '/'
+  const pageTitle = getPageTitle(location.pathname)
 
   const handlePingServer = async () => {
     setAccessMessage(null)
@@ -113,20 +130,32 @@ function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-          <NavLink
-            to="/"
-            className="flex items-center gap-2 text-foreground visited:text-foreground hover:text-foreground no-underline hover:no-underline"
-            end
-          >
-            <HeartPulse className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold tracking-tight">Helfinka</span>
-          </NavLink>
+          <div className="flex items-center gap-1">
+            {!isHomePage && (
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="-ml-2 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                aria-label="Go back"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            )}
+            <NavLink
+              to="/"
+              className="flex items-center gap-2 text-foreground visited:text-foreground hover:text-foreground no-underline hover:no-underline"
+              end
+            >
+              <HeartPulse className="h-6 w-6 text-primary" />
+              <span className="text-lg font-semibold tracking-tight">{pageTitle}</span>
+            </NavLink>
+          </div>
 
           <div className="flex items-center gap-2">
             {isAuthenticated && user ? (
               <>
-                <div className="flex flex-col items-end text-right text-xs leading-tight">
-                  <span className="font-medium">{user.displayName}</span>
+                <div className="flex flex-col items-end text-right text-xs leading-tight max-w-[100px] sm:max-w-none">
+                  <span className="font-medium break-words">{user.displayName}</span>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

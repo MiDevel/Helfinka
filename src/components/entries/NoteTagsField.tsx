@@ -61,7 +61,7 @@ function NoteTagsField({ value, onChange }: NoteTagsFieldProps) {
           value={input}
           onChange={handleInputChange}
           onKeyDown={handleInputKeyDown}
-          placeholder="Add tag and press Enter (e.g. HEADACHE)"
+          placeholder="Enter/pick tag and tap 'Add'"
           className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm"
         />
         <Button type="button" variant="outline" onClick={handleAdd} className="shrink-0">

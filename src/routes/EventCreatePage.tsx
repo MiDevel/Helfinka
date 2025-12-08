@@ -183,9 +183,6 @@ function EventCreatePage() {
     <section className="space-y-4">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{getTitle(type)}</h1>
-        <p className="text-sm text-muted-foreground">
-          Choose a type and record a single health entry.
-        </p>
       </div>
 
       <Card>
@@ -197,7 +194,7 @@ function EventCreatePage() {
               size="sm"
               onClick={() => handleTypeChange('BP')}
             >
-              Blood pressure
+              B.P.
             </Button>
             <Button
               type="button"
@@ -213,7 +210,7 @@ function EventCreatePage() {
               size="sm"
               onClick={() => handleTypeChange('MED')}
             >
-              Medication
+              Meds
             </Button>
             <Button
               type="button"
@@ -230,18 +227,6 @@ function EventCreatePage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <Card>
           <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <label htmlFor="timestamp" className="text-sm font-medium">
-                Date and time
-              </label>
-              <Input
-                id="timestamp"
-                type="datetime-local"
-                value={timestampLocal}
-                onChange={(event) => setTimestampLocal(event.target.value)}
-                required
-              />
-            </div>
 
             {type === 'BP' && (
               <div className="grid gap-4 md:grid-cols-3">
@@ -401,7 +386,21 @@ function EventCreatePage() {
                 </div>
               </div>
             )}
+
+            <div className="space-y-1">
+              <label htmlFor="timestamp" className="text-sm font-medium">
+                Date and time
+              </label>
+              <Input
+                id="timestamp"
+                type="datetime-local"
+                value={timestampLocal}
+                onChange={(event) => setTimestampLocal(event.target.value)}
+                required
+              />
+            </div>
           </CardContent>
+
           <CardFooter className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending}>
               Cancel

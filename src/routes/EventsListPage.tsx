@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Eye } from 'lucide-react'
 
 import { useDeleteEntryMutation, useEntriesQuery } from '@/lib/api/entries'
 import {
@@ -9,14 +10,6 @@ import {
 } from '@/lib/dateTime'
 import type { EntryType, HealthEntry } from '@/types/entry'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -29,10 +22,12 @@ import { Input } from '@/components/ui/input'
 
 type TypeFilter = EntryType | 'ALL'
 
-function formatLocalDateTime(iso: string): string {
-  const date = new Date(iso)
+function formatLocalDate(iso: string): string {
+  return new Date(iso).toLocaleDateString()
+}
 
-  return date.toLocaleString()
+function formatLocalDateTime(iso: string): string {
+  return new Date(iso).toLocaleString()
 }
 
 function getInitialDates() {
@@ -41,16 +36,16 @@ function getInitialDates() {
   return { from, to }
 }
 
-function getTypeLabel(type: EntryType): string {
+function getTypeLabel(type: EntryType, short = false): string {
   switch (type) {
     case 'BP':
-      return 'Blood pressure'
+      return short ? 'BP' : 'Blood pressure'
     case 'WEIGHT':
-      return 'Weight'
+      return short ? 'Wt' : 'Weight'
     case 'MED':
-      return 'Medication'
+      return short ? 'Med' : 'Medication'
     case 'NOTE':
-      return 'Note'
+      return short ? 'Note' : 'Note'
     default:
       return type
   }
@@ -130,122 +125,121 @@ function EventsListPage() {
     setSelected(null)
   }
 
+  const selectClass =
+    'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm'
+
   return (
-    <section className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
-        <p className="text-sm text-muted-foreground">
-          Filter your health diary by type and date range, then view or delete individual entries.
-        </p>
+    <section className="space-y-3">
+      {/* Filters row */}
+      <div className="flex flex-wrap gap-2">
+        <select
+          id="preset"
+          value={preset}
+          onChange={(event) => handlePresetChange(event.target.value as DatePreset | 'custom')}
+          className={`${selectClass} flex-1 min-w-[120px]`}
+          aria-label="Date range"
+        >
+          <option value="3d">Last 3 days</option>
+          <option value="7d">Last 7 days</option>
+          <option value="14d">Last 2 weeks</option>
+          <option value="28d">Last 4 weeks</option>
+          <option value="3m">Last 3 months</option>
+          <option value="12m">Last 12 months</option>
+          <option value="custom">Custom</option>
+        </select>
+
+        <select
+          id="type"
+          value={type}
+          onChange={(event) => setType(event.target.value as TypeFilter)}
+          className={`${selectClass} flex-1 min-w-[120px]`}
+          aria-label="Event type"
+        >
+          <option value="ALL">All types</option>
+          <option value="BP">Blood pressure</option>
+          <option value="WEIGHT">Weight</option>
+          <option value="MED">Medication</option>
+          <option value="NOTE">Note</option>
+        </select>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Filters</CardTitle>
-          <CardDescription>Select the type and time period you want to review.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-            <div className="space-y-1">
-              <label htmlFor="type" className="text-sm font-medium">
-                Type
-              </label>
-              <select
-                id="type"
-                value={type}
-                onChange={(event) => setType(event.target.value as TypeFilter)}
-                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm"
-              >
-                <option value="ALL">All</option>
-                <option value="BP">Blood pressure</option>
-                <option value="WEIGHT">Weight</option>
-                <option value="MED">Medication</option>
-                <option value="NOTE">Note</option>
-              </select>
-            </div>
+      {/* Custom date range - only shown when 'custom' is selected */}
+      {preset === 'custom' && (
+        <div className="flex gap-2">
+          <Input
+            id="from"
+            type="date"
+            value={from}
+            max={to || undefined}
+            onChange={(event) => handleFromChange(event.target.value)}
+            className="flex-1"
+            aria-label="From date"
+          />
+          <Input
+            id="to"
+            type="date"
+            value={to}
+            min={from || undefined}
+            onChange={(event) => handleToChange(event.target.value)}
+            className="flex-1"
+            aria-label="To date"
+          />
+        </div>
+      )}
 
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-              <div className="space-y-1">
-                <label htmlFor="from" className="text-sm font-medium">
-                  From
-                </label>
-                <Input
-                  id="from"
-                  type="date"
-                  value={from}
-                  max={to || undefined}
-                  onChange={(event) => handleFromChange(event.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="to" className="text-sm font-medium">
-                  To
-                </label>
-                <Input
-                  id="to"
-                  type="date"
-                  value={to}
-                  min={from || undefined}
-                  onChange={(event) => handleToChange(event.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="preset" className="text-sm font-medium">
-                  Quick range
-                </label>
-                <select
-                  id="preset"
-                  value={preset}
-                  onChange={(event) => handlePresetChange(event.target.value as DatePreset | 'custom')}
-                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm"
-                >
-                  <option value="3d">Last 3 days</option>
-                  <option value="7d">Last 7 days</option>
-                  <option value="14d">Last 2 weeks</option>
-                  <option value="28d">Last 4 weeks</option>
-                  <option value="3m">Last 3 months</option>
-                  <option value="12m">Last 12 months</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Status messages */}
+      {isLoading && <p className="text-sm text-muted-foreground py-4">Loading events…</p>}
+      {isError && !isLoading && (
+        <p className="text-sm text-destructive py-4">Failed to load events. Please try again.</p>
+      )}
+      {!isLoading && !isError && entries.length === 0 && (
+        <p className="text-sm text-muted-foreground py-4">No events found for this period.</p>
+      )}
 
-      <div className="space-y-3">
-        {isLoading && <p className="text-sm text-muted-foreground">Loading events…</p>}
-        {isError && !isLoading && (
-          <p className="text-sm text-destructive">Failed to load events. Please try again.</p>
-        )}
-
-        {!isLoading && !isError && entries.length === 0 && (
-          <p className="text-sm text-muted-foreground">No events found for this period.</p>
-        )}
-
-        {entries.length > 0 && (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {entries.map((entry) => (
-              <Card key={entry.sk} className="flex flex-col justify-between">
-                <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-semibold flex items-center justify-between gap-2">
-                    <span>{getTypeLabel(entry.type)}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatLocalDateTime(entry.timestamp)}
-                    </span>
-                  </CardTitle>
-                  <CardDescription>{getEntrySummary(entry)}</CardDescription>
-                </CardHeader>
-                <CardFooter className="flex justify-end px-6 pb-4">
-                  <Button type="button" variant="outline" size="sm" onClick={() => setSelected(entry)}>
-                    View
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Table view */}
+      {entries.length > 0 && (
+        <div className="border rounded-md overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr className="border-b">
+                <th className="text-left px-3 py-2 font-medium">Date</th>
+                <th className="text-left px-3 py-2 font-medium hidden md:table-cell">Type</th>
+                <th className="text-left px-3 py-2 font-medium">Summary</th>
+                <th className="w-10 px-2 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry.sk} className="border-b last:border-b-0 hover:bg-muted/30">
+                  <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
+                    <span className="md:hidden">{formatLocalDate(entry.timestamp)}</span>
+                    <span className="hidden md:inline">{formatLocalDateTime(entry.timestamp)}</span>
+                  </td>
+                  <td className="px-3 py-2 hidden md:table-cell">
+                    <span className="text-muted-foreground">{getTypeLabel(entry.type)}</span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className="md:hidden text-muted-foreground">[{getTypeLabel(entry.type, true)}]</span>{' '}
+                    {getEntrySummary(entry)}
+                  </td>
+                  <td className="px-2 py-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setSelected(entry)}
+                      aria-label="View details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent>
